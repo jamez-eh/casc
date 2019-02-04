@@ -18,3 +18,7 @@ Imports:
     scran,
     dplyr,
     ggROC
+ByteCompile: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 6.1.1
+VignetteBuilder: knitr

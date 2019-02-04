@@ -71,7 +71,7 @@ cascer <- function(sce, clusters){
                savePredictions = TRUE)
 
   fit <- train(data_splits[[1]], train_y, method = "glmnet",
-                               trControl = trcntrl ,metric = "ROC",
+                               trControl = trcntrl ,metric = "Accuracy",
                                tuneGrid = expand.grid(alpha = 1,
                                                       lambda = seq(0.001,0.1,by = 0.001)))
 
