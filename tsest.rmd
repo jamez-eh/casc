@@ -1,0 +1,26 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+sce <- readRDS( '/huntsman/huntsmansc/james_analysis/data/auc/DH9_sceset_qc.rds')
+
+colData(sce)[,1:12] <- NULL
+mcols(sce) <- NULL
+yo <- cascer(sce, sce$sc3_3_clusters)
+plot <- multROC(yo)
+save(sce, file = "/huntsman/huntsmansc/casc/data/test_sce.rda")
+save(yo, file = "/huntsman/huntsmansc/casc/data/test_casc_obj.rda")
+save(plot, file = "/huntsman/huntsmansc/casc/data/test_plot.rda")
+```
