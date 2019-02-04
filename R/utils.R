@@ -23,10 +23,6 @@ variableGenes <- function(sce, marker_num){
 }
 
 
-
-
-
-
 sampleSplit <- function(sce, marker_num=2000) {
 
   if(dim(sce)[1] > marker_num) {
@@ -81,9 +77,9 @@ cascer <- function(sce, clusters){
 
 
 
-  probs <- predict(fit2, newdata = data_splits[[3]], type = "prob")
+  probs <- predict(fit, newdata = data_splits[[3]], type = "prob")
 
-  classes <- chartr("ABCDEFGHI", "123456789", predict(fit2, newdata = data_splits[[3]], type = "raw")) %>%
+  classes <- chartr("ABCDEFGHI", "123456789", predict(fit, newdata = data_splits[[3]], type = "raw")) %>%
     as.numeric()
 
   auc <- as.numeric(pROC::auc(multiclass.roc(as.numeric(classes), as.numeric(data_splits[[4]]))))
@@ -112,7 +108,6 @@ multROC <- function(casc){
       #binarize each level
       single_t <- ifelse(truths == i, 1, 0)
       roc_l[i] <- list(pROC::roc(single_t, response[,i]))
-
     }
   }
   else {
