@@ -1,47 +1,5 @@
-# Hello, world!
-#
-# This is an example function named 'hello'
-# which prints 'Hello, world!'.
-#
-# You can learn more about package authoring with RStudio at:
-#
-#   http://r-pkgs.had.co.nz/
-#
-# Some useful keyboard shortcuts for package authoring:
-#
-#   Build and Reload Package:  'Ctrl + Shift + B'
-#   Check Package:             'Ctrl + Shift + E'
-#   Test Package:              'Ctrl + Shift + T'
 
 
-suppressPackageStartupMessages({
-  library(scater)
-  library(SingleCellExperiment)
-  library(tidyverse)
-  library(matrixStats)
-  library(glue)
-  library(scran)
-  library(glmnet)
-  library(plyr)
-  library(magrittr)
-  library(caret)
-  library(doParallel)
-  library(stats)
-  library(pROC)
-  library(ROCR)
-  library(scales)
-  library(ggROC)
-
-})
-
-
-
-
-
-
-
-
-#gets genes with highest variance across cells in a singleCellExperiment object for the specified number of genes
 variableGenes <- function(sce, marker_num){
 
   if(dim(sce)[1] > marker_num) {
@@ -69,13 +27,6 @@ variableGenes <- function(sce, marker_num){
 
 
 
-
-
-#Splits sce into testing and training data, but also filters the markers to reduce training time (if needed)
-#Param: marker_num - number of markers to use
-#Param: sce - single cell experiment with a clustering called mc_cluster
-#Return: list(training_matrix, training_labels, testing_matrix, testing_labels)
-
 sampleSplit <- function(sce, marker_num=2000) {
 
   if(dim(sce)[1] > marker_num) {
@@ -101,9 +52,14 @@ sampleSplit <- function(sce, marker_num=2000) {
 }
 
 
-
-
-
+#' Sample, Train, and Predict logistic regression model using singleCellExperiment and glmnet
+#'
+#' @param sce a singleCellExperiment
+#' @param clusters A cluster, an array or list of integers of same length as number of cells in sce
+#'
+#' @return A casc object with predicted classes, auc, response, and truths
+#'
+#' @export
 cascer <- function(sce, clusters){
 
   sce$clusters <- clusters
@@ -139,6 +95,13 @@ cascer <- function(sce, clusters){
   return(obj)
 }
 
+#' Sample, Train, and Predict logistic regression model using singleCellExperiment and glmnet
+#'
+#' @param casc A casc object produced by cascer
+#'
+#' @return A ggplot object with ROC curves plotted for each cluster
+#'
+#' @export
 multROC <- function(casc){
   truths <- casc$truths
   response <-casc$response
@@ -156,7 +119,7 @@ multROC <- function(casc){
     roc_l[1] <- list(pROC::roc(truths, response[,1]))
   }
 
-  ggroc(roc_l)
+  ggroc(roc_l) + guides(fill=guide_legend(title="Cluster"))
 }
 
 

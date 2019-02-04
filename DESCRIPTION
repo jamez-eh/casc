@@ -3,9 +3,8 @@ Type: Package
 Title: Casc
 Version: 0.1.0
 Authors@R: c(
-  person("James", "Hopkins", email = "jamesedhopkins@gmail.com", role = c("aut"))
+  person("James", "Hopkins", email = "jamesedhopkins@gmail.com", role = c("aut", "cre"))
   )
-Maintainer: James Hopkins jamesedhopkins@gmail.com
 Description: Trains logistic regression on provided clusters and gene matrix. Produces multi ROC curves for comparison of clusterings.
 License: Apache License (>= 2.0)
 Encoding: UTF-8
