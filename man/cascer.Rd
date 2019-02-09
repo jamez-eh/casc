@@ -4,12 +4,12 @@
 \alias{cascer}
 \title{Sample, Train, and Predict logistic regression model using singleCellExperiment and glmnet}
 \usage{
-cascer(sce, clusters)
+cascer(sce, ...)
 }
 \arguments{
 \item{sce}{a singleCellExperiment}
 
-\item{clusters}{A cluster, an array or list of integers of same length as number of cells in sce}
+\item{...}{A cluster, an array or list of integers of same length as number of cells in sce}
 }
 \value{
 A casc object with predicted classes, auc, response, and truths

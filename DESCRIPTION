@@ -12,13 +12,16 @@ LazyData: true
 Depends: R (>= 3.5)
 Imports:
     SingleCellExperiment,
-    glmnet,
     pROC,
     caret,
-    scran,
-    dplyr,
-    ggROC
+    magrittr,
+    matrixStats,
+    ggROC,
+    knitr, 
+    glue,
+    ggplot2,
+    testthat
 ByteCompile: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 6.1.1
+RoxygenNote: 6.1.1.9000
 VignetteBuilder: knitr
