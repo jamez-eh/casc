@@ -1,0 +1,38 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+    library(SingleCellExperiment)
+    # library(glmnet)
+    library(pROC)
+    library(caret)
+    library(scran)
+    library(dplyr)
+```
+
+```{r}
+
+sce <- readRDS( '/huntsman/huntsmansc/james_analysis/data/auc/DH9_sceset_qc.rds')
+
+test_sce <- sce[1:50, 9000:dim(sce)[2]]
+
+colData(test_sce)[,1:12] <- NULL
+mcols(test_sce) <- NULL
+test_casc_list <- cascer(test_sce, list(test_sce$sc3_2_clusters, test_sce$sc3_3_clusters, test_sce$sc3_4_clusters))
+
+
+save(test_sce, file = "/huntsman/huntsmansc/casc/data/test_sce.rda")
+save(test_casc_list, file = "/huntsman/huntsmansc/casc/data/test_casc_list.rda")
+
+aucPlot(test_casc_list)
+lapply(test_casc_list, multROC)
+
+```
+
+

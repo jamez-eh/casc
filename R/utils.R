@@ -57,8 +57,9 @@ single_casc <- function(cluster_name, dataSplits){
   classes <- chartr("ABCDEFGHI", "123456789", predict(fit, newdata=t(logcounts(dataSplits[[2]])), type="raw")) %>%
     as.numeric()
   
-  auc <- as.numeric(pROC::auc(multiclass.roc(as.numeric(classes), as.numeric(colData(dataSplits[[2]])[cluster_name][[1]]))))
-  
+  roc_l <- multROC(colData(dataSplits[[2]])[cluster_name][[1]], probs)
+  auc <- avgAUC(roc_l)
+
   obj <- list(predicted_classes=classes, auc=auc, response= probs, truths=colData(dataSplits[[2]])[cluster_name][[1]] )
   
   class(obj) <- "casc"
@@ -68,15 +69,14 @@ single_casc <- function(cluster_name, dataSplits){
 #' Sample, Train, and Predict logistic regression model using singleCellExperiment and glmnet
 #'
 #' @param sce a singleCellExperiment
-#' @param ... A cluster, an array or list of integers of same length as number of cells in sce
+#' @param clusters A list of clusters, an array or list of integers of same length as number of cells in sce
 #'
 #' @return A casc object with predicted classes, auc, response, and truths
 #' @import SingleCellExperiment
 #' @export
-cascer <- function(sce, ...){
+cascer <- function(sce, clusters, marker_num=2000){
   
-  clusters <- list(...)
-  
+
   k <- 0
   l <- list()
   for (c in clusters){
@@ -86,12 +86,13 @@ cascer <- function(sce, ...){
     l[k] <- cluster_name
   }
 
-  dataSplits <- sampleSplit(sce)
+  dataSplits <- sampleSplit(sce, marker_num=marker_num)
   cascs <- lapply(l, single_casc, dataSplits=dataSplits)
   
   names(cascs) <- l
   
   class(cascs) <- "casc_list"
+  
   
   cascs
   
@@ -126,21 +127,16 @@ print.casc <- function(x, ...) {
 
 
 
-#' Sample, Train, and Predict logistic regression model using singleCellExperiment and glmnet
+#' calculate roc objects from a casc object, one for each cluster
 #'
-#' @param casc A casc object produced by cascer
+#' @param casc A casc object
 #'
-#' @return A ggplot object with ROC curves plotted for each cluster
-#' @importFrom  pROC ggroc roc
-#' @importFrom ggplot2 theme element_blank
+#' @return A list of roc objects
+#' @importFrom  pROC roc
 #' 
-#' 
-#' @export
-multROC <- function(casc){
-  truths <- casc$truths
-  response <-casc$response
-  if(length(levels(truths) > 2)) {
-    roc_l <- list()
+multROC <- function(truths, response){
+  roc_l <- list()
+  if(length(levels(truths)) > 2) {
     for(i in as.numeric(levels(as.factor(truths)))) {
       single_t <- ifelse(truths == i, 1, 0)
       roc_l[i] <- list(pROC::roc(single_t, response[,i]))
@@ -150,15 +146,29 @@ multROC <- function(casc){
     roc_l[1] <- list(pROC::roc(truths, response[,1]))
   }
 
+  roc_l
+}
+
+#' Plot multiple roc objects on the same ggplot
+#'
+#' @param casc A casc object
+#'
+#' @return A ggplot object with ROC curves plotted for each cluster
+#' @importFrom  pROC ggroc
+#' @importFrom ggplot2 theme element_blank
+#' 
+#' 
+#' @export
+multROCPlot <- function(casc){
+  roc_l <- multROC(truths=casc$truths, response=casc$response)
   pROC::ggroc(roc_l) + theme(legend.title=element_blank())
 }
 
 
 
-
 #' Sample, Train, and Predict logistic regression model using singleCellExperiment and glmnet
 #'
-#' @param casc A casc_list object produced by cascer
+#' @param casc_list A casc_list object produced by cascer
 #'
 #' @return A ggplot scatterplot with AUCs plotted for each cluster
 #' @importFrom ggplot2 ggplot geom_point theme_light
@@ -184,6 +194,22 @@ aucPlot <- function(casc_list){
     
     ggplot(df, aes(x=K, y=AUC)) + geom_point() + theme_light()
     
+}
+
+
+#' Sample, Train, and Predict logistic regression model using singleCellExperiment and glmnet
+#'
+#' @param roc_l A list of casc objects produced by cascer
+#'
+#' @return Average auc for the list, numeric
+#' @importFrom roc auc
+#' 
+#' 
+#' @export
+avgAUC <- function(roc_l){
+  auc_l <- lapply(roc_l, auc) %>% 
+    lapply(as.numeric)
+  mean(unlist(auc_l))
 }
 
 
