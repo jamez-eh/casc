@@ -2,16 +2,18 @@
 % Please edit documentation in R/utils.R
 \name{multROC}
 \alias{multROC}
-\title{Sample, Train, and Predict logistic regression model using singleCellExperiment and glmnet}
+\title{calculate roc objects from a casc object, one for each cluster}
 \usage{
-multROC(casc)
+multROC(truths, response)
 }
 \arguments{
-\item{casc}{A casc object produced by cascer}
+\item{truths}{List of original class labels}
+
+\item{response}{matrix or data.frame of probabilities of each class}
 }
 \value{
-A ggplot object with ROC curves plotted for each cluster
+A list of roc objects
 }
 \description{
-Sample, Train, and Predict logistic regression model using singleCellExperiment and glmnet
+calculate roc objects from a casc object, one for each cluster
 }
