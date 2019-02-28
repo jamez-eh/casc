@@ -2,18 +2,36 @@
 % Please edit documentation in R/utils.R
 \name{cascer}
 \alias{cascer}
-\title{Sample, Train, and Predict logistic regression model using singleCellExperiment and glmnet}
+\title{Sample, Train, and Predict logistic regression model using singleCellExperiment and glmnet.}
 \usage{
-cascer(sce, ...)
+cascer(sce, clusters, marker_num = 2000)
 }
 \arguments{
 \item{sce}{a singleCellExperiment}
 
-\item{...}{A cluster, an array or list of integers of same length as number of cells in sce}
+\item{clusters}{A list of clusters, an array or list of integers of same length as number of cells in sce.}
+
+\item{marker_num}{The top variable genes that will be used to filter the SCE by to reduce runtime.}
 }
 \value{
-A casc object with predicted classes, auc, response, and truths
+A list of casc objects with predicted classes, aucs, responses, and truths.
 }
 \description{
-Sample, Train, and Predict logistic regression model using singleCellExperiment and glmnet
+Sample, Train, and Predict logistic regression model using singleCellExperiment and glmnet.
+}
+\examples{
+library(SingleCellExperiment)
+
+counts <- matrix(rnorm(40000, 10, 10), ncol=200, nrow=200)
+sce <- SingleCellExperiment(assays = list(logcounts = counts))
+colnames(sce) <- stringi::stri_rand_strings(200, 5)
+rownames(sce) <- stringi::stri_rand_strings(200, 5)
+
+cluster_1 <- rep(c(0, 1, 1, 1, 1, 0, 1, 1, 1, 1), 20)
+cluster_2 <- rep(c(0, 1, 1, 0, 1, 0, 1, 1, 0, 1), 20)
+
+casc_list <- cascer(sce, list(cluster_1, cluster_2), marker_num=1500)
+
+
+
 }

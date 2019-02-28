@@ -20,7 +20,14 @@ Imports:
     knitr, 
     glue,
     ggplot2,
-    testthat
+    testthat,
+    scater
+biocViews:
+  Software, 
+  Transcriptomics, 
+  GeneExpression, 
+  RNASeq,
+  SingleCell
 ByteCompile: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 6.1.1.9000

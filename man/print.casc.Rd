@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{print.casc}
 \alias{print.casc}
-\title{Print a \code{cellassign} fit}
+\title{Print a \code{casc}}
 \usage{
 \method{print}{casc}(x, ...)
 }
@@ -15,5 +15,5 @@
 Prints a structured representation of the \code{casc}
 }
 \description{
-Print a \code{cellassign} fit
+Print a \code{casc}
 }
