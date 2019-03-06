@@ -19,55 +19,17 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r}
-suppressPackageStartupMessages({
-
-    library(SingleCellExperiment)
-    library(pROC)
-    library(caret)
-    library(scran)
-    library(dplyr)
-    library(SC3)
-    library(foreach)
-})
-```
-
-
-```{r}
-simulate_clusters <- function(cluster_number= 5, cell_number = 1000, gene_number = 1000){
-  cluster_size <- cell_number/cluster_number
-  
-  mat <- matrix(rep(0, cell_number*gene_number), ncol=cell_number, nrow=gene_number)
-  
-  for(i in 1:cluster_number){
-    mat[((i-1)*cluster_size+1):((i-1)*cluster_size+10), ((i-1)*cluster_size+1):(i*cluster_size)] <- rnorm(cluster_size*10, mean=3, 0.5)
-  }
-  mat
-}
-
-logexp <- function(x){
-  10^(x)-1
-}
-clusts <- simulate_clusters()
-counts <- clusts
-
-for(i in 1:dim(counts)[1]){
-  for(j in 1:dim(counts)[2]){
-    counts[i,j] <- logexp(counts[i,j])
-  }
-}
-
-sce <- SingleCellExperiment(assays = list(logcounts = clusts, counts=counts))
-rowData(sce)$feature_symbol <- stringi::stri_rand_strings(1000, 5)
-
-```
 
 # Overview
 
+A method to evaluate the number of clusters found in single cell RNAseq data. 
+The idea is to select a clustering with clusters that are 
+
+A logistic regression model is trained with cells in half the provided clustering and an ROC curve is calculated with the remaining test data. 
 
 # Installation
 
-Installation with `devtools` package via
+Installation with `devtools` package via:
 
 ```{r, eval=FALSE}
 devtools::install_github("jamez-eh/casc")
@@ -76,46 +38,54 @@ devtools::install_github("jamez-eh/casc")
  
 # Basics
 
-## Create SingleCellExperiment object
-```{r}
-data <- read.csv("/huntsman/huntsmansc/casc/data/simulation.csv")
-data_mat <- as.matrix(data)
-rownames(data_mat) <- data_mat[,1]
-data_mat <- data_mat[,2:dim(data_mat)[2]]
-data_mat <- t(data_mat)
-num_mat <- apply(data_mat, 2, as.numeric)
-rownames(num_mat) <- rownames(data_mat)
-sce_sim <- SingleCellExperiment(assays = list(logcounts = num_mat))
+First load required packages.
 
-rownames(sce_sim) <- stringi::stri_rand_strings(500, 5)
-colnames(sce_sim) <- stringi::stri_rand_strings(1000, 5)
-rowData(sce_sim)$feature_symbol <- rownames(sce_sim)
-
-save(sce_sim, file= "/huntsman/huntsmansc/casc/data/sce_sim")
-data(sce_sim)
+```{r, results='hide', message=FALSE, warning=FALSE}
+library(SingleCellExperiment)
+library(casc)
+library(SC3)
 ```
-## Clustering Data
+
+
+## Load Data
+
+To illustrate the usecase of `casc` we use a simulated dataset, included with the package, with 1000 cells and 500 genes. There are 10 simulated clusters, each with 20 markers.
+
 ```{r}
+data(sce_sim)
+data(test_sce)
+```
+
+
+## Clustering Data
+
+The data must first be clustered. Here we are using the [SC3](http://bioconductor.org/packages/release/bioc/html/SC3.html) package to find clusters with values of k from 2 to 15.
+
+```{r}
+library(SC3)
 sce_sim <- sc3(sce_sim, ks = 2:15, svm_max = 15000, gene_filter = FALSE)
 ```
 
 
+
+
 ## Casc Useage
+[SC3](http://bioconductor.org/packages/release/bioc/html/SC3.html) stores clusters for various selection of k in slots `sc3_k_clusters`.
+The function `cascer` takes a `singleCellExperiment` object and a list of clusterings. 
+
 ```{r}
-
-# mc <- Mclust(reducedDims(sce_voa10819UT)[['PCA']][,1:2], G = 3)
-# sce_voa10819UT$mc_cluster <- factor(mc$classification)
-
 registerDoSEQ()
+test_casc_list <- casc::cascer(sce_sim, list(sce_sim$sc3_10_clusters, sce_sim$sc3_3_clusters, sce_sim$sc3_5_clusters, sce_sim$sc3_14_clusters))
+```
 
-test_casc_list <- casc::cascer(sce_sim, list(sce_sim$sc3_10_clusters, sce_sim$sc3_3_clusters, sce_sim$sc3_5_clusters))
+## Plot creation
+
+A scatter plot of auc values for the list of `casc` objects can be created with the function `aucPlot`. This AUC is the mean of the 1 vs all binary AUCs. Multiple ROC curves can be visualized on the same graph by calling `multROCPlot` on a single `casc` object.
+
+```{r}
 casc::aucPlot(test_casc_list)
-
-
 casc::multROCPlot(test_casc_list$casc_clusters_1)
 casc::multROCPlot(test_casc_list$casc_clusters_2)
-
-
 ```
 
 # Technical
