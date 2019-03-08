@@ -54,7 +54,6 @@ sampleSplit <- function(sce, marker_num=2000) {
 #' @param response matrix or data.frame of probabilities of each class
 #' @return A list of roc objects
 #' @importFrom  pROC roc
-#' 
 multROC <- function(truths, response){
   roc_l <- list()
   if(length(levels(as.factor(truths))) > 2) {
@@ -84,7 +83,7 @@ multROC2 <- function(truths, response){
 #' @importFrom caret trainControl train predict.train
 #' @importFrom magrittr "%>%"
 #' @keywords internal
-single_casc <- function(cluster_name, dataSplits){
+single_casc <- function(cluster_name, dataSplits, alpha=0.5){
   
   trainY <- chartr("0123456789", "ABCDEFGHIJ", colData(dataSplits[[1]])[cluster_name][[1]])
   
@@ -93,8 +92,8 @@ single_casc <- function(cluster_name, dataSplits){
                           savePredictions = TRUE)
   
   fit <- train(t(logcounts(dataSplits[[1]])), trainY, method = "glmnet",
-               trControl=trcntrl, metric="Accuracy",
-               tuneGrid=expand.grid(alpha=1,
+               trControl=trcntrl, metric="Accuracy", 
+               tuneGrid=expand.grid(alpha=alpha,
                                     lambda=seq(0.001, 0.1, by=0.001)))
   
   
@@ -120,7 +119,8 @@ single_casc <- function(cluster_name, dataSplits){
 #' @param sce a singleCellExperiment
 #' @param clusters A list of clusters, an array or list of integers of same length as number of cells in sce.
 #' @param marker_num The top variable genes that will be used to filter the SCE by to reduce runtime.
-#'
+#' @param alpha A parameter for logistic regression where 0 is `ridge regression` and 1 is `lasso regression`.
+#' 
 #' @return A list of casc objects with predicted classes, aucs, responses, and truths.
 #' 
 #' @examples 
@@ -140,12 +140,12 @@ single_casc <- function(cluster_name, dataSplits){
 #' 
 #' @import SingleCellExperiment
 #' @export
-cascer <- function(sce, clusters, marker_num=2000){
-  clusters <- lapply(clusters, as.vector, "numeric")
+cascer <- function(sce, clusters, marker_num=2000, alpha=0.5){
+    clusters <- lapply(clusters, as.vector, "numeric")
   
-  for(i in 1:length(clusters)){
-    if(0 %in% unlist(clusters[i])){
-      clusters[[i]] <- unlist(lapply(clusters[i], function(x){x + 1}))
+      for(i in 1:length(clusters)){
+            if(0 %in% unlist(clusters[i])){
+                clusters[[i]] <- unlist(lapply(clusters[i], function(x){x + 1}))
     }
   }
   
@@ -160,7 +160,7 @@ cascer <- function(sce, clusters, marker_num=2000){
   }
   
   dataSplits <- sampleSplit(sce, marker_num=marker_num)
-  cascs <- lapply(l, single_casc, dataSplits=dataSplits)
+  cascs <- lapply(l, single_casc, dataSplits=dataSplits, alpha=alpha)
   
   names(cascs) <- l
   
@@ -207,7 +207,7 @@ print.casc <- function(x, ...) {
 #'
 #' @return A ggplot object with ROC curves plotted for each cluster
 #' @importFrom  pROC ggroc
-#' @importFrom ggplot2 theme element_blank
+#' @importFrom ggplot2 theme element_blank 
 #' 
 #' @examples 
 #' library(SingleCellExperiment)
@@ -228,6 +228,7 @@ multROCPlot <- function(casc){
   roc_l <- multROC(truths=casc$truths, response=casc$response)
   pROC::ggroc(roc_l) + theme(legend.title=element_blank())
 }
+
 
 
 

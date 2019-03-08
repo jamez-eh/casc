@@ -16,12 +16,12 @@ Imports:
     caret,
     magrittr,
     matrixStats,
-    ggROC,
-    knitr, 
     glue,
     ggplot2,
+Suggests:
     testthat,
-    scater
+    scater,
+    knitr
 biocViews:
   Software, 
   Transcriptomics, 

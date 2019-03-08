@@ -4,7 +4,7 @@
 \alias{cascer}
 \title{Sample, Train, and Predict logistic regression model using singleCellExperiment and glmnet.}
 \usage{
-cascer(sce, clusters, marker_num = 2000)
+cascer(sce, clusters, marker_num = 2000, alpha = 0.5)
 }
 \arguments{
 \item{sce}{a singleCellExperiment}
@@ -12,6 +12,8 @@ cascer(sce, clusters, marker_num = 2000)
 \item{clusters}{A list of clusters, an array or list of integers of same length as number of cells in sce.}
 
 \item{marker_num}{The top variable genes that will be used to filter the SCE by to reduce runtime.}
+
+\item{alpha}{A parameter for logistic regression where 0 is \code{ridge regression} and 1 is \code{lasso regression}.}
 }
 \value{
 A list of casc objects with predicted classes, aucs, responses, and truths.
