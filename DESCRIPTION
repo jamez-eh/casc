@@ -1,7 +1,7 @@
 Package: casc
 Type: Package
 Title: Casc
-Version: 0.1.0
+Version: 0.99.0
 Authors@R: c(
   person("James", "Hopkins", email = "jamesedhopkins@gmail.com", role = c("aut", "cre"))
   )
@@ -27,7 +27,8 @@ biocViews:
   Transcriptomics, 
   GeneExpression, 
   RNASeq,
-  SingleCell
+  SingleCell,
+  Regression
 ByteCompile: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 6.1.1.9000

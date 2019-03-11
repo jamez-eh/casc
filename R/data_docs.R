@@ -19,7 +19,8 @@ NULL
 NULL
 
 
-#' a simulated SingleCellExpermient object for vignette with 1000 cells and 500 genes. 10 artificial clusters contain 20 marker genes a piece.
+#' a simulated SingleCellExpermient object for vignette with 1000 cells
+#'  and 500 genes. 10 artificial clusters contain 20 marker genes a piece.
 #'
 #' @docType data
 #' @keywords datasets

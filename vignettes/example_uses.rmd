@@ -43,7 +43,6 @@ First load required packages.
 ```{r, results='hide', message=FALSE, warning=FALSE}
 library(SingleCellExperiment)
 library(casc)
-library(SC3)
 library(foreach)
 library(scater)
 ```
@@ -74,17 +73,18 @@ sce_sim <- sc3(sce_sim, ks = 2:15, svm_max = 15000, gene_filter = FALSE)
 ## Casc Useage
 [SC3](http://bioconductor.org/packages/release/bioc/html/SC3.html) stores clusters for various selection of k in slots `sc3_k_clusters`.
 The function `cascer` takes a `singleCellExperiment` object and a list of clusterings and returns a list of `casc` objects. 
-Each `casc` object can be accessed via `casc_list$casc_clusters_x`, where x is the index of the corresponding clustering in the list provided to `cascer`.
+Each `casc` object can be accessed via `casc_list$casc_x`, where x is the index of the corresponding clustering in the list provided to `cascer`.
 
 `casc` objects have 4 slots `predicted_classes`: classes predicted for test data
                             `auc`: mean auc for each classes ROC 
                             `response`: probabilities of each predicted class for test data
-                            `truths`: true, provided classes for test data
+                            `truths`: true, provided classes for test data      
 
 
 ```{r}
 registerDoSEQ()
-test_casc_list <- casc::cascer(sce_sim, list(sce_sim$sc3_2_clusters, sce_sim$sc3_3_clusters, sce_sim$sc3_5_clusters, sce_sim$sc3_8_clusters, sce_sim$sc3_9_clusters, sce_sim$sc3_10_clusters, sce_sim$sc3_11_clusters, sce_sim$sc3_12_clusters, sce_sim$sc3_15_clusters), alpha =0.5)
+
+test_casc_list <- cascer(sce_sim, list(sce_sim$sc3_2_clusters, sce_sim$sc3_3_clusters, sce_sim$sc3_5_clusters, sce_sim$sc3_8_clusters, sce_sim$sc3_9_clusters, sce_sim$sc3_10_clusters, sce_sim$sc3_11_clusters, sce_sim$sc3_12_clusters, sce_sim$sc3_15_clusters), alpha =0.5)
 
 
 ```
@@ -95,15 +95,15 @@ A scatter plot of auc values for the list of `casc` objects can be created with 
 
 ```{r}
 casc::aucPlot(test_casc_list)
-multROCPlot(test_casc_list$casc_clusters_1)
-multROCPlot(test_casc_list$casc_clusters_2)
-casc::multROCPlot(test_casc_list$casc_clusters_3)
-casc::multROCPlot(test_casc_list$casc_clusters_4)
-casc::multROCPlot(test_casc_list$casc_clusters_5)
-casc::multROCPlot(test_casc_list$casc_clusters_6)
-casc::multROCPlot(test_casc_list$casc_clusters_7)
-casc::multROCPlot(test_casc_list$casc_clusters_8)
-casc::multROCPlot(test_casc_list$casc_clusters_9)
+multROCPlot(test_casc_list$casc_1)
+multROCPlot(test_casc_list$casc_2)
+casc::multROCPlot(test_casc_list$casc_3)
+casc::multROCPlot(test_casc_list$casc_4)
+casc::multROCPlot(test_casc_list$casc_5)
+casc::multROCPlot(test_casc_list$casc_6)
+casc::multROCPlot(test_casc_list$casc_7)
+casc::multROCPlot(test_casc_list$casc_8)
+casc::multROCPlot(test_casc_list$casc_9)
 ```
 ## Visualizing clusters
 # Technical
