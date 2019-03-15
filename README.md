@@ -4,7 +4,7 @@
 
 
 <div style="text-align:center">
-  <img src="https://github.com/jamezeh/casc/raw/master/inst/VOA10286UT_cluster_4.png"  align="middle"/>
+  <img src="https://raw.githubusercontent.com/jamez-eh/casc/master/inst/VOA10286UT_cluster_4.png"  align="middle"/>
 </div>
 
 

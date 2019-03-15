@@ -84,8 +84,9 @@ single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
                                                                                 FALSE)) %>%
         sort()
     
-    
-    train_dat <- upsample(t(logcounts(dataSplits[[1]])), trainY)
+    train_dat <- logcounts(dataSplits[[1]])[,!is.na(trainY)]
+    trainY <- trainY[!is.na(trainY)]
+    train_dat <- upsample(t(train_dat), trainY)
     
     trcntrl <- trainControl(
             method = "cv",
