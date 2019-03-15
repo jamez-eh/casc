@@ -74,7 +74,7 @@ multROC <- function(truths, response) {
 #' @keywords internal
 single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
 
-    trainY <- colData(dataSplits[[1]])[cluster_name][[1]] %>%
+    trainY <- colData(dataSplits[[1]])[[cluster_name]] %>%
         as.factor()
     
     original_levels <- levels(trainY)
@@ -106,16 +106,21 @@ single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
                                 lambda = seq(0.001, 0.1, by = 0.001))
     )
     
+    testY <- colData(dataSplits[[2]])[[cluster_name]]
+    test_dat <- logcounts(dataSplits[[2]])
+    test_dat <- test_dat[,!is.na(testY)]
+    testY <- testX[,!is.na(testY)]
+    
     probs <-
-        predict.train(fit, newdata = t(logcounts(dataSplits[[2]])), 
+        predict.train(fit, newdata = t(test_dat), 
                         type = "prob")
 
-    classes <-predict(fit, newdata = t(logcounts(dataSplits[[2]])), 
+    classes <-predict(fit, newdata = t(test_dat), 
                 type = "raw") %>%
         as.numeric() %>%
         as.factor()
     
-    roc_l <- multROC(colData(dataSplits[[2]])[[cluster_name]], probs) 
+    roc_l <- multROC(testY, probs) 
     auc <- avgAUC(roc_l)
     
     levels(classes) <- original_levels
@@ -126,7 +131,7 @@ single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
         predicted_classes = classes,
         auc = auc,
         response = probs,
-        truths = as.factor(colData(dataSplits[[2]])[[cluster_name]])
+        truths = as.factor(testY)
     )
     class(obj) <- "casc"
     obj
