@@ -2,7 +2,7 @@
 
 S3method(print,casc)
 export(aucPlot)
-export(cascer)
+export(casc)
 export(multROCPlot)
 import(SingleCellExperiment)
 import(glue)

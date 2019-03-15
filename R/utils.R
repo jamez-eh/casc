@@ -20,6 +20,7 @@ variableGenes <- function(sce, marker_num) {
     }
 }
 
+
 #'
 #'  Splits SingleCellExperiment object into test and training data
 #'
@@ -46,10 +47,12 @@ sampleSplit <- function(sce, marker_num = 2000) {
 #' @return A list of roc objects
 #' @importFrom  pROC roc
 multROC <- function(truths, response) {
+    
+    truths <- as.numeric(as.factor(truths))
     if (length(levels(as.factor(truths))) > 2) {
         roc_l <- lapply(seq_along(levels(as.factor(truths))), function(i){
-          single_t <- ifelse(truths == i, 1, 0)
-          pROC::roc(single_t, response[, i])
+            single_t <- ifelse(truths == i, 1, 0)
+            pROC::roc(single_t, response[, i])
         })
     }
     else {
@@ -58,8 +61,6 @@ multROC <- function(truths, response) {
     }
     roc_l
 }
-
-
 
 
 #'
@@ -72,9 +73,21 @@ multROC <- function(truths, response) {
 #' @importFrom magrittr "%>%"
 #' @keywords internal
 single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
-    trainY <- chartr("0123456789", "ABCDEFGHIJ", 
-        colData(dataSplits[[1]])[cluster_name][[1]])
-        trcntrl <- trainControl(
+
+    trainY <- colData(dataSplits[[1]])[cluster_name][[1]] %>%
+        as.factor()
+    
+    original_levels <- levels(trainY)
+    
+    levels(trainY) <- do.call(paste0, 
+                            replicate(7, sample(LETTERS, length(levels(trainY)), TRUE), 
+                                                                                FALSE)) %>%
+        sort()
+    
+    
+    train_dat <- upsample(t(logcounts(dataSplits[[1]])), trainY)
+    
+    trcntrl <- trainControl(
             method = "cv",
             number = 5,
             returnResamp = "all",
@@ -83,7 +96,7 @@ single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
     )
     fit <-
         train(
-        t(logcounts(dataSplits[[1]])),
+        train_dat,
         trainY,
         method = "glmnet",
         trControl = trcntrl,
@@ -91,31 +104,33 @@ single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
         tuneGrid = expand.grid(alpha = alpha,
                                 lambda = seq(0.001, 0.1, by = 0.001))
     )
-  
+    
     probs <-
         predict.train(fit, newdata = t(logcounts(dataSplits[[2]])), 
                         type = "prob")
+
+    classes <-predict(fit, newdata = t(logcounts(dataSplits[[2]])), 
+                type = "raw") %>%
+        as.numeric() %>%
+        as.factor()
     
-    probs <- probs[order(nchar(colnames(probs)), colnames(probs))]
-    colnames(probs) <- chartr("ABCDEFGHIJ", "0123456789", colnames(probs))
-    classes <- chartr("ABCDEFGHIJ",
-        "0123456789",
-        predict(fit, newdata = t(logcounts(dataSplits[[2]])), 
-                type = "raw")) %>%
-        as.numeric()
-    
-    roc_l <- multROC(colData(dataSplits[[2]])[cluster_name][[1]], probs) 
+    roc_l <- multROC(colData(dataSplits[[2]])[[cluster_name]], probs) 
     auc <- avgAUC(roc_l)
+    
+    levels(classes) <- original_levels
+    
+    colnames(probs) <- original_levels
     
     obj <- list(
         predicted_classes = classes,
         auc = auc,
         response = probs,
-        truths = colData(dataSplits[[2]])[cluster_name][[1]]
+        truths = as.factor(colData(dataSplits[[2]])[[cluster_name]])
     )
     class(obj) <- "casc"
     obj
 }
+
 
 #' Sample, Train, and Predict logistic regression
 #'  model using singleCellExperiment and glmnet.
@@ -142,7 +157,7 @@ single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
 #' cluster_1 <- rep(c(0, 1, 1, 1, 1, 0, 1, 1, 1, 1), 20)
 #' cluster_2 <- rep(c(0, 1, 1, 0, 1, 0, 1, 1, 0, 1), 20)
 #'
-#' casc_list <- cascer(sce, list(cluster_1, cluster_2), marker_num=1500)
+#' casc_list <- casc(sce, list(cluster_1, cluster_2), marker_num=1500)
 #'
 #'
 #'
@@ -150,34 +165,27 @@ single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
 #' 
 #' @importFrom magrittr "%>%"
 #' @export
-cascer <- function(sce,
-                   clusters,
-                   marker_num = 2000,
-                   alpha = 0.5) {
-  
-  
-    clusters <- lapply(clusters, as.vector, "numeric")
+casc <- function(sce,
+                clusters,
+                marker_num = 2000,
+                alpha = 0.5) {
+
+    if(is.matrix(sce)){
+        sce <- SingleCellExperiment(assays = list(logcounts = sce))
+    }
     
-    clusters <- lapply(seq_along(clusters), function(c) {
-      if (0 %in% unlist(clusters[c])) {
-          unlist(lapply(clusters[c], function(x) {
-          x + 1}))
-      }
-      else{
-          clusters[c]
-      }
-    })
+    logcounts(sce) <- as.matrix(logcounts(sce))
+    
     
     l <- lapply(seq_along(clusters), function(c) {
-        cluster_name <- paste0("casc_", c+1)
-        # colData(sce)[[cluster_name]] <- clusters[[ c ]]
+        cluster_name <- paste0("casc_", c)
         cluster_name
     })
-    
+
     for(c in seq_along(l)){
-      colData(sce)[l[[c]]] <- clusters[[c]]
+        colData(sce)[l[[c]]] <- clusters[[c]]
     }
-  
+    
     dataSplits <- sampleSplit(sce, marker_num = marker_num)
     cascs <- lapply(l, single_casc, dataSplits = dataSplits, alpha = alpha)
     names(cascs) <- l
@@ -185,6 +193,7 @@ cascer <- function(sce,
     
     cascs
 }
+
 
 #' Print a \code{casc}
 #'
@@ -209,9 +218,10 @@ print.casc <- function(x, ...) {
         "Call x$response to access prediction response
         ",
         "Call x$truths to access original classes\n\n"
-      )
+        )
     )
 }
+
 
 #' Plot multiple roc objects on the same ggplot
 #'
@@ -232,19 +242,20 @@ print.casc <- function(x, ...) {
 #' cluster_1 <- rep(c(0, 1, 1, 1, 1, 0, 1, 1, 1, 1), 20)
 #' cluster_2 <- rep(c(0, 1, 1, 0, 1, 0, 1, 1, 0, 1), 20)
 #'
-#' casc_list <- cascer(sce, list(cluster_1, cluster_2), marker_num=1500)
+#' casc_list <- casc(sce, list(cluster_1, cluster_2), marker_num=1500)
 #' multROCPlot(casc_list$casc_1)
 #'
 #' @export
 multROCPlot <- function(casc) {
-  roc_l <- multROC(truths = casc$truths, response = casc$response)
-  pROC::ggroc(roc_l) + theme(legend.title = element_blank())
+    roc_l <- multROC(truths = casc$truths, response = casc$response)
+    pROC::ggroc(roc_l) + theme(legend.title = element_blank())
 }
+
 
 #' Sample, Train, and Predict logistic regression 
 #' model using singleCellExperiment and glmnet
 #'
-#' @param casc_list A casc_list object produced by cascer
+#' @param casc_list A casc_list object produced by casc
 #'
 #' @return A ggplot scatterplot with AUCs plotted for each cluster
 #' @importFrom ggplot2 ggplot geom_point theme_light
@@ -262,39 +273,36 @@ multROCPlot <- function(casc) {
 #' cluster_1 <- rep(c(0, 1, 1, 1, 1, 0, 1, 1, 1, 1), 20)
 #' cluster_2 <- rep(c(0, 1, 1, 0, 1, 0, 1, 1, 0, 1), 20)
 #'
-#' casc_list <- cascer(sce, list(cluster_1, cluster_2), marker_num=1500)
+#' casc_list <- casc(sce, list(cluster_1, cluster_2), marker_num=1500)
 #' aucPlot(casc_list)
 #'
 #' @export
 aucPlot <- function(casc_list) {
-  df <- t(as.data.frame(lapply(casc_list, function(x) {
-    x$auc
-  })))
+    df <- t(as.data.frame(lapply(casc_list, function(x) {
+        x$auc
+    })))
 
-  k <- t(as.data.frame(lapply(casc_list, function(x) {
-    length(x[[3]])
-  })))
-  df <- as.data.frame(cbind(df, k)) 
-  
-  colnames(df) <- c("AUC", "K")
-  
-  df$K <- as.factor(df$K)
-  
-  ggplot(df, aes(x = K, y = AUC)) + geom_point() + theme_light()
-  
+    k <- t(as.data.frame(lapply(casc_list, function(x) {
+        length(x[[3]])
+    })))
+    
+    df <- as.data.frame(cbind(df, k)) 
+    colnames(df) <- c("AUC", "K")
+    df$K <- as.factor(df$K)
+    
+    ggplot(df, aes(x = K, y = AUC)) + geom_point() + theme_light()
 }
+
 
 #' Finds the average AUC from a list of roc objects
 #'
-#' @param roc_l A list of casc objects produced by cascer
+#' @param roc_l A list of casc objects produced by casc
 #' @importFrom pROC auc
 #' @importFrom magrittr "%>%"
 #' @return Average auc for the list, numeric
 #'
 avgAUC <- function(roc_l) {
-  auc_l <- lapply(roc_l, auc) %>%
-    lapply(as.numeric)
-  mean(unlist(auc_l))
+    auc_l <- lapply(roc_l, auc) %>%
+        lapply(as.numeric)
+    mean(unlist(auc_l))
 }
-
-

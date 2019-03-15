@@ -2,6 +2,12 @@
 
 `casc` trains a logisitic regression model on provided single-cell RNAseq clusters. It creates an ROC curve for each cluster vs the others to help decide the appropriate number of clusters.
 
+
+<div style="text-align:center">
+  <img src="https://github.com/jamezeh/casc/raw/master/inst/VOA10286UT_cluster_4.png"  align="middle"/>
+</div>
+
+
 ## Installation
 
 `casc` can be installed via `devtools` and github:
