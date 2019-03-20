@@ -69,36 +69,37 @@ multROC <- function(truths, response) {
 #'
 #' @return a casc object
 #'
-#' @importFrom caret trainControl train predict.train
+#' @importFrom caret trainControl train predict.train upSample
 #' @importFrom magrittr "%>%"
 #' @keywords internal
-single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
+single_casc <- function(cluster_name, dataSplits, alpha = 0.5, cv) {
 
-    trainY <- colData(dataSplits[[1]])[[cluster_name]] %>%
+    train_y <- colData(dataSplits[[1]])[[cluster_name]] %>%
         as.factor()
     
-    original_levels <- levels(trainY)
+    original_levels <- levels(train_y)
     
-    levels(trainY) <- do.call(paste0, 
-                            replicate(7, sample(LETTERS, length(levels(trainY)), TRUE), 
+    levels(train_y) <- do.call(paste0, 
+                            replicate(7, sample(LETTERS, length(levels(train_y)), TRUE), 
                                                                                 FALSE)) %>%
         sort()
     
-    train_dat <- logcounts(dataSplits[[1]])[,!is.na(trainY)]
-    trainY <- trainY[!is.na(trainY)]
-    train_dat <- upsample(t(train_dat), trainY)
+    train_dat <- logcounts(dataSplits[[1]])[,!is.na(train_y)]
+    train_y <- train_y[!is.na(train_y)]
+    up_samps <- upSample(t(train_dat), train_y) 
+    
+    train_x <- subset(up_samps, select=-c(Class))
     
     trcntrl <- trainControl(
             method = "cv",
-            number = 5,
+            number = cv,
             returnResamp = "all",
             classProbs = TRUE,
             savePredictions = TRUE
     )
-    fit <-
-        train(
-        train_dat,
-        trainY,
+    fit <- train(
+        x = train_x, 
+        y = up_samps$Class,
         method = "glmnet",
         trControl = trcntrl,
         metric = "Accuracy",
@@ -106,10 +107,10 @@ single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
                                 lambda = seq(0.001, 0.1, by = 0.001))
     )
     
-    testY <- colData(dataSplits[[2]])[[cluster_name]]
+    test_y <- colData(dataSplits[[2]])[[cluster_name]]
     test_dat <- logcounts(dataSplits[[2]])
-    test_dat <- test_dat[,!is.na(testY)]
-    testY <- testX[,!is.na(testY)]
+    test_dat <- test_dat[,!is.na(test_y)]
+    test_y <- test_y[!is.na(test_y)]
     
     probs <-
         predict.train(fit, newdata = t(test_dat), 
@@ -120,7 +121,7 @@ single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
         as.numeric() %>%
         as.factor()
     
-    roc_l <- multROC(testY, probs) 
+    roc_l <- multROC(test_y, probs) 
     auc <- avgAUC(roc_l)
     
     levels(classes) <- original_levels
@@ -131,7 +132,7 @@ single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
         predicted_classes = classes,
         auc = auc,
         response = probs,
-        truths = as.factor(testY)
+        truths = as.factor(test_y)
     )
     class(obj) <- "casc"
     obj
@@ -148,6 +149,7 @@ single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
 #' will be used to filter the SCE by to reduce runtime.
 #' @param alpha A parameter for logistic regression where 0 
 #' is `ridge regression` and 1 is `lasso regression`.
+#' @param cv The number of folds for cross validation
 #'
 #' @return A list of casc objects with predicted classes, 
 #' aucs, responses, and truths.
@@ -174,7 +176,8 @@ single_casc <- function(cluster_name, dataSplits, alpha = 0.5) {
 casc <- function(sce,
                 clusters,
                 marker_num = 2000,
-                alpha = 0.5) {
+                alpha = 0.5,
+                cv = 5) {
 
     if(is.matrix(sce)){
         sce <- SingleCellExperiment(assays = list(logcounts = sce))
@@ -193,7 +196,7 @@ casc <- function(sce,
     }
     
     dataSplits <- sampleSplit(sce, marker_num = marker_num)
-    cascs <- lapply(l, single_casc, dataSplits = dataSplits, alpha = alpha)
+    cascs <- lapply(l, single_casc, dataSplits = dataSplits, alpha = alpha, cv = cv)
     names(cascs) <- l
     class(cascs) <- "casc_list"
     
@@ -207,7 +210,7 @@ casc <- function(sce,
 #' @param ... Additional arguments (unused)
 #'
 #'
-#' @return Prints a structured representation of the \code{casc}
+#' @return A string with available options
 #' @import glue
 #
 #' @export
@@ -308,7 +311,7 @@ aucPlot <- function(casc_list) {
 #' @return Average auc for the list, numeric
 #'
 avgAUC <- function(roc_l) {
-    auc_l <- lapply(roc_l, auc) %>%
+    auc_l <- lapply(roc_l, pROC::auc) %>%
         lapply(as.numeric)
     mean(unlist(auc_l))
 }

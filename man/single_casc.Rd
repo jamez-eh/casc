@@ -5,7 +5,7 @@
 \title{Sample, Train, and Predict logistic regression model
 using singleCellExperiment and glmnet, one object at a time}
 \usage{
-single_casc(cluster_name, dataSplits, alpha = 0.5)
+single_casc(cluster_name, dataSplits, alpha = 0.5, cv)
 }
 \value{
 a casc object

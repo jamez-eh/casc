@@ -12,7 +12,7 @@
 \item{...}{Additional arguments (unused)}
 }
 \value{
-Prints a structured representation of the \code{casc}
+A string with available options
 }
 \description{
 Print a \code{casc}

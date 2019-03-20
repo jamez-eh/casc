@@ -5,7 +5,7 @@
 \title{Sample, Train, and Predict logistic regression
 model using singleCellExperiment and glmnet.}
 \usage{
-casc(sce, clusters, marker_num = 2000, alpha = 0.5)
+casc(sce, clusters, marker_num = 2000, alpha = 0.5, cv = 5)
 }
 \arguments{
 \item{sce}{a singleCellExperiment}
@@ -18,6 +18,8 @@ will be used to filter the SCE by to reduce runtime.}
 
 \item{alpha}{A parameter for logistic regression where 0
 is \code{ridge regression} and 1 is \code{lasso regression}.}
+
+\item{cv}{The number of folds for cross validation}
 }
 \value{
 A list of casc objects with predicted classes,

@@ -24,6 +24,16 @@ devtools::install_github("jamez-eh/casc")
 * `clusters`: A list of clusterings to evaluate.
 * `alpha`: A parameter for logistic regression. alpha = 1 represents the lasso penalty and alpha = 0 represents the ridge penalty.
 
-#Author
+```{r}
+registerDoSEQ()
+sce_sim <- readRDS("~/sce_sim.rds")
+casc_list <- casc(sce = sce_sim, 
+                  clusters = list(clustering_1, clustering_2, clustering_3, clustering_4, clustering_5), 
+                  alpha = 0.5)
+
+
+```
+
+# Author
 
 James Hopkins
