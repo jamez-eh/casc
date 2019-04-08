@@ -61,12 +61,13 @@ data(test_sce)
 
 ## Clustering Data
 
-The data must first be clustered. Here we are using the [SC3](http://bioconductor.org/packages/release/bioc/html/SC3.html) package to find clusters with values of k from 2 to 15.
+The data must first be clustered. Here we are using the [quickCluster](https://rdrr.io/bioc/scran/man/quickCluster.html) package to find clusters with values of k from 2 to 15.
 
 ```{r, results='hide', message=FALSE, warning=FALSE}
-sce_sim <- sc3(sce_sim, 
-               ks = 2:15, svm_max = 15000, 
-               gene_filter = FALSE)
+
+sce_sim$clusters_1 <- quickCluster(sce_sim, method="igraph", min.mean=0.1, assay.type="logcounts")
+sce_sim$clusters_2 <- quickCluster(sce_sim, method="igraph", min.mean=0.1, assay.type="logcounts", max.size = 200)
+
 ```
 
 
@@ -91,7 +92,7 @@ The function `cascer` takes a `singleCellExperiment` object and a list of cluste
 ```{r}
 registerDoSEQ()
 casc_list <- casc(sce = sce_sim, 
-                  clusters = list(sce_sim$sc3_8_clusters, sce_sim$sc3_9_clusters, sce_sim$sc3_10_clusters, sce_sim$sc3_11_clusters, sce_sim$sc3_12_clusters, sce_sim$sc3_15_clusters), 
+                  clusters = list(sce_sim$clusters_1, sce_sim$clusters_2), 
                   alpha = 0.5)
 
 
