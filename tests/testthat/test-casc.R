@@ -5,7 +5,7 @@ test_that("cascer returns correct types", {
   data(test_sce)
   data(test_casc_list)
 
-  casc_obj <- cascer(test_sce, list(test_sce$sc3_3_clusters, test_sce$sc3_2_clusters))
+  casc_obj <- casc(test_sce, list(test_sce$sc3_3_clusters, test_sce$sc3_2_clusters))
   
   expect_equal(length(casc_obj), 2)
   
