@@ -61,12 +61,12 @@ data(test_sce)
 
 ## Clustering Data
 
-The data must first be clustered. Here we are using the [quickCluster](https://rdrr.io/bioc/scran/man/quickCluster.html) package to find clusters with values of k from 2 to 15.
+The data must first be clustered. Here we are using the [quickCluster](https://rdrr.io/bioc/scran/man/quickCluster.html) package to find clusters.
 
 ```{r, results='hide', message=FALSE, warning=FALSE}
 
-sce_sim$clusters_1 <- quickCluster(sce_sim, method="igraph", min.mean=0.1, assay.type="logcounts")
-sce_sim$clusters_2 <- quickCluster(sce_sim, method="igraph", min.mean=0.1, assay.type="logcounts", max.size = 200)
+sce_sim$clusters_1 <- scran::quickCluster(sce_sim, method="igraph", min.mean=0.1, assay.type="logcounts")
+sce_sim$clusters_2 <- scran::quickCluster(sce_sim, method="igraph", min.mean=0.1, assay.type="logcounts", min.size=200)
 
 ```
 

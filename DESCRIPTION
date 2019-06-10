@@ -17,12 +17,12 @@ Imports:
     magrittr,
     matrixStats,
     glue,
-    ggplot2,
-    scran
+    ggplot2
 Suggests:
     testthat,
     scater,
-    knitr
+    knitr,
+    scran
 biocViews:
   Software, 
   Transcriptomics, 
